@@ -87,6 +87,7 @@
 -record(state, {socket,
 		sockmod,
 		socket_monitor,
+		fqdn,
 		xml_socket,
 		streamid,
 		sasl_state,
@@ -340,8 +341,10 @@ init([{SockMod, Socket}, Opts]) ->
 		 true -> Socket
 	      end,
     SocketMonitor = SockMod:monitor(Socket1),
+    {ok, FQDN} = ejabberd_net:gethostname(Socket),
     StateData = #state{socket = Socket1, sockmod = SockMod,
 		       socket_monitor = SocketMonitor,
+		       fqdn = FQDN,
 		       xml_socket = XMLSocket, zlib = Zlib, tls = TLS,
 		       tls_required = StartTLSRequired,
 		       tls_enabled = TLSEnabled, tls_options = TLSOpts,
@@ -407,6 +410,7 @@ wait_for_stream({xmlstreamstart, Name, Attrs}, StateData) ->
 				    TLS = StateData#state.tls,
 				    TLSEnabled = StateData#state.tls_enabled,
 				    TLSRequired = StateData#state.tls_required,
+				    FQDN = StateData#state.fqdn,
 				    SASLState = cyrsasl:server_new(
 					    <<"jabber">>, Server, <<"">>, [],
 					    fun (U) ->
@@ -419,8 +423,9 @@ wait_for_stream({xmlstreamstart, Name, Attrs}, StateData) ->
 					    end,
 					  fun(U, AuthzId, P, D, DG) ->
 						    ejabberd_auth:check_password_with_authmodule(
-						    U, AuthzId, Server, P, D, DG)
-					    end),
+							U, AuthzId, Server, P, D, DG)
+					    end,
+					    FQDN),
 				    Mechs =
 					case TLSEnabled or not TLSRequired of
 					true ->

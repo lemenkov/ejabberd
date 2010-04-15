@@ -28,11 +28,13 @@
 
 -protocol({xep, 175, '1.2'}).
 
--export([start/1, stop/0, mech_new/4, mech_step/2]).
+-export([start/1, stop/0, mech_new/1, mech_step/2]).
 
 -behaviour(cyrsasl).
 
 -record(state, {server = <<"">> :: binary()}).
+
+-include("ejabberd.hrl").
 
 start(_Opts) ->
     cyrsasl:register_mechanism(<<"ANONYMOUS">>, ?MODULE, plain),
@@ -40,7 +42,7 @@ start(_Opts) ->
 
 stop() -> ok.
 
-mech_new(Host, _GetPassword, _CheckPassword, _CheckPasswordDigest) ->
+mech_new(#sasl_ctx{host=Host}) ->
     {ok, #state{server = Host}}.
 
 mech_step(#state{server = Server} = S, ClientIn) ->

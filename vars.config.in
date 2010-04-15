@@ -27,6 +27,7 @@
 {riak, @riak@}.
 {redis, @redis@}.
 {elixir, @elixir@}.
+{esasl, @esasl@}.
 {iconv, @iconv@}.
 
 %% Version
