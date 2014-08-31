@@ -74,6 +74,7 @@ start(normal, _Args) ->
     ejabberd_oauth:start(),
     gen_mod:start_modules(),
     ejabberd_listener:start_listeners(),
+    {module, sd_notify} == code:load_file(sd_notify) andalso sd_notify:sd_notify(0, "READY=1\nSTATUS=Initialized\nMAINPID=" ++ os:getpid() ++ "\n"),
     ?INFO_MSG("ejabberd ~s is started in the node ~p", [?VERSION, node()]),
     Sup;
 start(_, _) ->
