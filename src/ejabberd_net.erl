@@ -10,7 +10,7 @@
 -author('mikma@users.sourceforge.net').
 %% -update_info({update, 0}).
 
--export([gethostname/1]).
+-export([gethostname/1,opt_type/1]).
 
 -include("ejabberd.hrl").
 -include("logger.hrl").
@@ -41,3 +41,6 @@ gethostname(Socket) ->
         end;
       F -> {ok, F}
     end.
+
+opt_type(sasl_fqdn) -> fun iolist_to_binary/1;
+opt_type(_) -> [sasl_fqdn].

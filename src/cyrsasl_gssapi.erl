@@ -46,7 +46,8 @@
 -export([start/1,
 	 stop/0,
 	 mech_new/1,
-	 mech_step/2]).
+	 mech_step/2,
+         opt_type/1]).
 
 -behaviour(cyrsasl).
 
@@ -71,7 +72,7 @@ start(_Opts) ->
 
     {ok, _Pid} = supervisor:start_child(ejabberd_sup, ChildSpec),
 
-    cyrsasl:register_mechanism("GSSAPI", ?MODULE, false).
+    cyrsasl:register_mechanism(<<"GSSAPI">>, ?MODULE, plain).
 
 stop() ->
     esasl:stop(?SERVER),
@@ -84,7 +85,11 @@ mech_new(#sasl_ctx{host=Host, fqdn=FQDN}) ->
     {ok, #state{sasl=Sasl,host=Host}}.
 
 mech_step(State, ClientIn) when is_list(ClientIn) ->
-    catch do_step(State, ClientIn).
+    ?DEBUG("mech_step_list~n", []),
+    catch do_step(State, ClientIn);
+mech_step(State, ClientIn) when is_binary(ClientIn) ->
+    ?DEBUG("mech_step_binary~n", []),
+    catch do_step(State, binary_to_list(ClientIn)).
 
 do_step(#state{needsmore=false}=State, _) ->
     check_user(State);
@@ -95,25 +100,30 @@ do_step(#state{needsmore=true,sasl=Sasl,step=Step}=State, ClientIn) ->
 	    ?DEBUG("ok~n", []),
 	    {ok, Display_name} = esasl:property_get(Sasl, gssapi_display_name),
 	    {ok, Authzid} = esasl:property_get(Sasl, authzid),
-	    {Authid, [$@ | Auth_realm]} =
+	    {Authid1, [$@ | Auth_realm1]} =
 		lists:splitwith(fun(E)->E =/= $@ end, Display_name),
+            Authid = list_to_binary(Authid1),
+            Auth_realm = list_to_binary(Auth_realm1),
+            ?DEBUG("Auth info: ~p ~p ~p ~p~n", [Authzid, Authid, Auth_realm, Display_name]),
+            %% TODO: gsasl 1.8.0 / esasl 0.1 always return empty Authzid, so use Authid as Authzid
 	    State1 = State#state{authid=Authid,
-				 authzid=Authzid,
+                                 authzid=Authid,
 				 authrealm=Auth_realm},
-	    handle_step_ok(State1, binary_to_list(RspAuth));
+	    handle_step_ok(State1, RspAuth);
 	{needsmore, RspAuth} ->
 	    ?DEBUG("needsmore~n", []),
 	    if (Step > 0) and (ClientIn =:= []) and (RspAuth =:= <<>>) ->
-		    {error, "not-authorized"};
+		    {error, <<"not-authorized">>};
 		true ->
-		    {continue, binary_to_list(RspAuth),
+		    {continue, RspAuth,
 		     State#state{step=Step+1}}
 	    end;
 	{error, _} ->
-	    {error, "not-authorized"}
+	    {error, <<"not-authorized">>}
     end.
 
-handle_step_ok(State, []) ->
+handle_step_ok(State, <<>>) ->
+    ?DEBUG("call check_user~n", []),
     check_user(State);
 handle_step_ok(#state{step=Step}=State, RspAuth) ->
     ?DEBUG("continue~n", []),
@@ -121,22 +131,25 @@ handle_step_ok(#state{step=Step}=State, RspAuth) ->
 
 check_user(#state{authid=Authid,authzid=Authzid,
 		  authrealm=Auth_realm,host=Host}) ->
-    Realm = ejabberd_config:get_local_option({sasl_realm, Host}),
+    Realm = ejabberd_config:get_local_option({sasl_realm, Host}, fun(F) -> F end),
 
     if Realm =/= Auth_realm ->
 	    ?DEBUG("bad realm ~p (expected ~p)~n",[Auth_realm, Realm]),
-	    throw({error, "not-authorized"});
+	    throw({error, <<"not-authorized">>});
        true ->
 	    ok
     end,
-
+    ?DEBUG("checkuser: ~p ~p~n", [Authid, Host]),
     case ejabberd_auth:is_user_exists(Authid, Host) of
 	false ->
 	    ?DEBUG("bad user ~p~n",[Authid]),
-	    throw({error, "not-authorized"});
+	    throw({error, <<"not-authorized">>});
 	true ->
 	    ok
     end,
 
     ?DEBUG("GSSAPI authenticated ~p ~p~n", [Authid, Authzid]),
     {ok, [{username, Authid}, {authzid, Authzid}]}.
+
+opt_type(sasl_realm) -> fun iolist_to_binary/1;
+opt_type(_) -> [sasl_realm].
