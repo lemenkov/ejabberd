@@ -22,12 +22,7 @@ if [ "$INSTALLUSER" != "" ] ; then
     EXEC_CMD="false"
     for GID in `id -G`; do
         if [ $GID -eq 0 ] ; then
-            INSTALLUSER_HOME=$(getent passwd "$INSTALLUSER" | cut -d: -f6)
-            if [ -n "$INSTALLUSER_HOME" ] && [ ! -d "$INSTALLUSER_HOME" ] ; then
-                mkdir -p "$INSTALLUSER_HOME"
-                chown "$INSTALLUSER" "$INSTALLUSER_HOME"
-            fi
-            EXEC_CMD="su $INSTALLUSER -c"
+            EXEC_CMD="su $INSTALLUSER -s /usr/bin/bash -c"
         fi
     done
     if [ `id -g` -eq `id -g $INSTALLUSER` ] ; then
