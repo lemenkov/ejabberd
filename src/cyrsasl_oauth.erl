@@ -34,8 +34,7 @@
 -record(state, {host}).
 
 start(_Opts) ->
-    cyrsasl:register_mechanism(<<"X-OAUTH2">>, ?MODULE, plain),
-    ok.
+    cyrsasl:register_mechanism(<<"X-OAUTH2">>, ?MODULE, plain).
 
 stop() -> ok.
 
