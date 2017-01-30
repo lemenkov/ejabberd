@@ -80,15 +80,15 @@ stop() ->
     supervisor:delete_child(ejabberd_sup, ?SERVER).
 
 mech_new(#sasl_ctx{host=Host, fqdn=FQDN}) ->
-    ?DEBUG("mech_new ~p ~p~n", [Host, FQDN]),
+    ?DEBUG("Host [~p] FQDN [~p]~n", [Host, FQDN]),
     {ok, Sasl} = esasl:server_start(?SERVER, "GSSAPI", "xmpp", FQDN),
     {ok, #state{sasl=Sasl,host=Host}}.
 
 mech_step(State, ClientIn) when is_list(ClientIn) ->
-    ?DEBUG("mech_step_list~n", []),
+    ?DEBUG("ClientIn [~p]~n", [ClientIn]),
     catch do_step(State, ClientIn);
 mech_step(State, ClientIn) when is_binary(ClientIn) ->
-    ?DEBUG("mech_step_binary~n", []),
+    ?DEBUG("ClientIn [~p]~n", [ClientIn]),
     catch do_step(State, binary_to_list(ClientIn)).
 
 do_step(#state{needsmore=false}=State, _) ->
