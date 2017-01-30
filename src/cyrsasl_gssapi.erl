@@ -84,18 +84,15 @@ mech_new(#sasl_ctx{host=Host, fqdn=FQDN}) ->
     {ok, Sasl} = esasl:server_start(?SERVER, "GSSAPI", "xmpp", FQDN),
     {ok, #state{sasl=Sasl,host=Host}}.
 
-mech_step(State, ClientIn) when is_list(ClientIn) ->
-    ?DEBUG("ClientIn [~p]~n", [ClientIn]),
-    catch do_step(State, ClientIn);
 mech_step(State, ClientIn) when is_binary(ClientIn) ->
     ?DEBUG("ClientIn [~p]~n", [ClientIn]),
-    catch do_step(State, binary_to_list(ClientIn)).
+    catch do_step(State, ClientIn).
 
 do_step(#state{needsmore=false}=State, _) ->
     check_user(State);
 do_step(#state{needsmore=true,sasl=Sasl,step=Step}=State, ClientIn) ->
-    ?DEBUG("mech_step~n", []),
-    case esasl:step(Sasl, list_to_binary(ClientIn)) of
+    ?DEBUG("ClientIn [~p]~n", [ClientIn]),
+    case esasl:step(Sasl, ClientIn) of
 	{ok, RspAuth} ->
 	    ?DEBUG("ok~n", []),
 	    {ok, Display_name} = esasl:property_get(Sasl, gssapi_display_name),
@@ -112,7 +109,7 @@ do_step(#state{needsmore=true,sasl=Sasl,step=Step}=State, ClientIn) ->
 	    handle_step_ok(State1, RspAuth);
 	{needsmore, RspAuth} ->
 	    ?DEBUG("needsmore~n", []),
-	    if (Step > 0) and (ClientIn =:= []) and (RspAuth =:= <<>>) ->
+	    if (Step > 0) and (ClientIn =:= <<>>) and (RspAuth =:= <<>>) ->
 		    {error, <<"not-authorized">>};
 		true ->
 		    {continue, RspAuth,
