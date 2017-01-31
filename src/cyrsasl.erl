@@ -30,7 +30,7 @@
 -author('alexey@process-one.net').
 
 -export([start/0, register_mechanism/3, listmech/1,
-	 server_new/8, server_start/3, server_step/2,
+	 server_new/7, server_start/3, server_step/2,
 	 opt_type/1]).
 
 -include("ejabberd.hrl").
@@ -143,14 +143,13 @@ listmech(Host) ->
     filter_anonymous(Host, Mechs).
 
 server_new(Service, ServerFQDN, UserRealm, _SecFlags,
-	   GetPassword, CheckPassword, CheckPasswordDigest, FQDN) ->
+	   GetPassword, CheckPassword, CheckPasswordDigest) ->
     Ctx = #sasl_ctx{
       host = ServerFQDN,
       realm = UserRealm,
       get_password = GetPassword,
       check_password = CheckPassword,
-      check_password_digest= CheckPasswordDigest,
-      fqdn = FQDN
+      check_password_digest= CheckPasswordDigest
      },
     #sasl_state{service = Service,
 		myname = ServerFQDN,

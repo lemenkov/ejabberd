@@ -60,8 +60,9 @@
 	  realm,
 	  get_password,
 	  check_password,
-	  check_password_digest,
-	  fqdn}).
+	  check_password_digest}).
+
+-type sasl_ctx() :: #sasl_ctx{}.
 
 -ifdef(ERL_DEPRECATED_TYPES).
 

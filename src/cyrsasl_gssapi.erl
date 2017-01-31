@@ -79,9 +79,10 @@ stop() ->
     supervisor:terminate_child(ejabberd_sup, ?SERVER),
     supervisor:delete_child(ejabberd_sup, ?SERVER).
 
-mech_new(#sasl_ctx{host=Host, fqdn=FQDN}) ->
-    ?DEBUG("Host [~p] FQDN [~p]~n", [Host, FQDN]),
-    {ok, Sasl} = esasl:server_start(?SERVER, "GSSAPI", "xmpp", FQDN),
+mech_new(#sasl_ctx{host=Host}) ->
+    ?DEBUG("Host [~p]~n", [Host]),
+    % FIXME Should we use sasl_realm value from config instead of Host?
+    {ok, Sasl} = esasl:server_start(?SERVER, "GSSAPI", "xmpp", Host),
     {ok, #state{sasl=Sasl,host=Host}}.
 
 mech_step(State, ClientIn) when is_binary(ClientIn) ->
