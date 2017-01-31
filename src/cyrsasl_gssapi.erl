@@ -94,7 +94,7 @@ do_step(#state{needsmore=true,sasl=Sasl,step=Step}=State, ClientIn) ->
     ?DEBUG("ClientIn [~p]~n", [ClientIn]),
     case esasl:step(Sasl, ClientIn) of
 	{ok, RspAuth} ->
-	    ?DEBUG("ok~n", []),
+	    ?DEBUG("ok: ~p~n", [RspAuth]),
 	    {ok, Display_name} = esasl:property_get(Sasl, gssapi_display_name),
 	    {ok, Authzid} = esasl:property_get(Sasl, authzid),
 	    {Authid1, [$@ | Auth_realm1]} =
