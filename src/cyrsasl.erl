@@ -61,12 +61,15 @@
 {
     service,
     myname,
+    realm,
+    get_password,
+    check_password,
+    check_password_digest,
     mech_mod,
-    mech_state,
-    ctx
+    mech_state
 }).
 
--callback mech_new(tuple()) -> any().
+-callback mech_new(binary(), fun(), fun(), fun()) -> any().
 -callback mech_step(any(), binary()) -> {ok, props()} |
                                         {ok, props(), binary()} |
                                         {continue, binary(), any()} |
@@ -144,16 +147,10 @@ listmech(Host) ->
 
 server_new(Service, ServerFQDN, UserRealm, _SecFlags,
 	   GetPassword, CheckPassword, CheckPasswordDigest) ->
-    Ctx = #sasl_ctx{
-      host = ServerFQDN,
-      realm = UserRealm,
-      get_password = GetPassword,
-      check_password = CheckPassword,
-      check_password_digest= CheckPasswordDigest
-     },
-    #sasl_state{service = Service,
-		myname = ServerFQDN,
-		ctx = Ctx}.
+    #sasl_state{service = Service, myname = ServerFQDN,
+		realm = UserRealm, get_password = GetPassword,
+		check_password = CheckPassword,
+		check_password_digest = CheckPasswordDigest}.
 
 server_start(State, Mech, undefined) ->
     server_start(State, Mech, <<"">>);
@@ -164,7 +161,11 @@ server_start(State, Mech, ClientIn) ->
       true ->
 	  case ets:lookup(sasl_mechanism, Mech) of
 	    [#sasl_mechanism{module = Module}] ->
-		{ok, MechState} = Module:mech_new(State#sasl_state.ctx),
+		{ok, MechState} =
+		    Module:mech_new(State#sasl_state.myname,
+				    State#sasl_state.get_password,
+				    State#sasl_state.check_password,
+				    State#sasl_state.check_password_digest),
 		server_step(State#sasl_state{mech_mod = Module,
 					     mech_state = MechState},
 			    ClientIn);

@@ -45,7 +45,7 @@
 
 -export([start/1,
 	 stop/0,
-	 mech_new/1,
+	 mech_new/4,
 	 mech_step/2,
          opt_type/1]).
 
@@ -79,7 +79,7 @@ stop() ->
     supervisor:terminate_child(ejabberd_sup, ?SERVER),
     supervisor:delete_child(ejabberd_sup, ?SERVER).
 
-mech_new(#sasl_ctx{host=Host}) ->
+mech_new(Host, _GetPassword, _CheckPassword, _CheckPasswordDigest) ->
     ?DEBUG("Host [~p]~n", [Host]),
     % FIXME Should we use sasl_realm value from config instead of Host?
     {ok, Sasl} = esasl:server_start(?SERVER, "GSSAPI", "xmpp", Host),

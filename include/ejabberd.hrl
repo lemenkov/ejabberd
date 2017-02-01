@@ -55,15 +55,6 @@
 
 -define(SCRAM_DEFAULT_ITERATION_COUNT, 4096).
 
--record(sasl_ctx, {
-	  host,
-	  realm,
-	  get_password,
-	  check_password,
-	  check_password_digest}).
-
--type sasl_ctx() :: #sasl_ctx{}.
-
 -ifdef(ERL_DEPRECATED_TYPES).
 
 -define(TDICT, dict()).
