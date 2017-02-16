@@ -129,7 +129,7 @@ handle_step_ok(#state{step=Step}=State, RspAuth) ->
 
 check_user(#state{authid=Authid,authzid=Authzid,
 		  authrealm=Auth_realm,host=Host}) ->
-    Realm = ejabberd_config:get_local_option({sasl_realm, Host}, fun(F) -> F end),
+    Realm = ejabberd_config:get_option({sasl_realm, Host}, fun(F) -> F end),
 
     if Realm =/= Auth_realm ->
 	    ?DEBUG("bad realm ~p (expected ~p)~n",[Auth_realm, Realm]),
