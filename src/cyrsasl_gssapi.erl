@@ -30,10 +30,8 @@
 
 %%%
 %%% configuration options:
-%%% {sasl_realm, "<Kerberos realm>"}.
-%%%
-%%% environment variables:
-%%% KRB5_KTNAME
+%%% sasl_realm: "<Kerberos realm>"
+%%% sasl_keytab: "<Path to Kerberos keytab>"
 %%%
 
 -module(cyrsasl_gssapi).
@@ -61,9 +59,11 @@
 		authrealm}).
 
 start(_Opts) ->
+    KeyTab = ejabberd_config:get_option(sasl_keytab, fun(F) -> F end),
+    Ccname = "", % default ccname
     ChildSpec =
 	{?SERVER,
-	 {esasl, start_link, [{local, ?SERVER}]},
+	 {esasl, start_link, [{local, ?SERVER}, KeyTab, Ccname]},
 	 transient,
 	 1000,
 	 worker,

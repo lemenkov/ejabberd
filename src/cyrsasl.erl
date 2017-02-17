@@ -85,7 +85,7 @@ start() ->
     cyrsasl_scram:start([]),
     cyrsasl_anonymous:start([]),
     cyrsasl_oauth:start([]),
-    maybe_try_start_gssapi(),
+    try_start_gssapi(),
     ok.
 
 %%
@@ -101,14 +101,6 @@ register_mechanism(Mechanism, Module, PasswordType) ->
       true ->
 	  ?DEBUG("SASL mechanism ~p is disabled", [Mechanism]),
 	  true
-    end.
-
-maybe_try_start_gssapi() ->
-    case os:getenv("KRB5_KTNAME") of
-        false ->
-	    ok;
-        _String ->
-	    try_start_gssapi()
     end.
 
 try_start_gssapi() ->
